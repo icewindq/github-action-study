@@ -80,6 +80,6 @@ jobs:
         env:
           IMAGE_ITEMS: "bloger_release bloger_debug"
         run: |
-          for item in "${{ env.IMAGE_ITEMS }}"; do
+          for item in $(echo ${{ env.IMAGE_ITEMS }}); do
             echo "Building and pushing Docker image for $item"
           done
