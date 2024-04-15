@@ -5,6 +5,8 @@ name: Create and publish a Docker image
 on:
   push:
     branches: ['main']
+    paths-ignore:
+      - 'deploy/**'
 
 # Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
 env:
@@ -76,18 +78,49 @@ jobs:
       #         cache-to: type=gha,mode=max
       #       done
 
-      - name: Build and push api components
-        env:
-          IMAGE_ITEMS: "bloger_release bloger_debug"
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push release api components
         uses: docker/build-push-action@v5
         with:
           context: .
-          target: $item
+          target: bloger_release
           push: false
           build-args: |
             NUGET_AUTH_USER=${{ github.repository_owner }}
             NUGET_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
           tags: |
-            ${{ env.REGISTRY }}/evc/${item}:${{ github.sha }}
+            ${{ env.REGISTRY }}/bloger:release-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Build and push debug api components
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: bloger_debug
+          push: false
+          build-args: |
+            NUGET_AUTH_USER=${{ github.repository_owner }}
+            NUGET_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          tags: |
+            ${{ env.REGISTRY }}/bloger:dev-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: update dev version
+        run: |
+          sed -E "s/\"imageTag\": ?\".+\"/\"imageTag\": \"dev-${{ github.sha }}\",/" deploy/dev/bloger.json \
+          && git commit -am 'update dev version: ${{ github.sha }}' \
+          && git push origin:main
+
+      - name: change live version locally
+        run: |
+          sed -E "s/\"imageTag\": ?\".+\"/\"imageTag\": \"dev-${{ github.sha }}\",/" deploy/live/bloger.json \
+
+      - name: create PR for live env
+        uses: peter-evans/create-pull-request@v6

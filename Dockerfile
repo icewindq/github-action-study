@@ -28,13 +28,13 @@ RUN addgroup --gid 666 --system blogergroup \
     && echo 'blogeruser ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/blogeruser \
     && chmod 0440 /etc/sudoers.d/blogeruser
 
-USER 666:666
-
 # Create release image
 FROM base AS bloger_release
 
 WORKDIR /app
 COPY --from=build_base /tmp/bloger-app/out/bloger ./
+
+USER 666:666
 
 ENTRYPOINT ["./bloger"]
 CMD ["release"]
