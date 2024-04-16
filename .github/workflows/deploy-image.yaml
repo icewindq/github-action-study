@@ -116,9 +116,9 @@ jobs:
         run: |
           sed -i -E "s/\"imageTag\": ?\".+\"/\"imageTag\": \"dev-${{ github.sha }}\"/" deploy/dev/bloger.json
           git config --local user.email "icewindq@gmail.com" \
-          && git config --local user.name "icewindq" \
+          && git config --local user.name "GitHub Actions" \
           && git commit -am 'update dev version: ${{ github.sha }}' \
-          && git push origin:main
+          && git push origin main
 
       - name: change live version locally
         run: |
