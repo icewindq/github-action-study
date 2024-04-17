@@ -134,4 +134,4 @@ jobs:
             deploy/live/*
           commit-message: PR for live release, created by github actions bot
           delete-branch: true
-          team-reviewers: studio-reviewers
+          reviewers: studio-reviewers
