@@ -115,10 +115,10 @@ jobs:
 
       - name: update dev version
         run: |
-          git config --local user.email "actions-bot@users.noreply.github.com" \
-          && git config --local user.name "actions-bot" \
           git pull
           sed -i -E "s/\"imageTag\": ?\".+\"/\"imageTag\": \"dev-${{ github.sha }}\"/" deploy/dev/bloger.json
+          git config --local user.email "actions-bot@users.noreply.github.com"
+          git config --local user.name "actions-bot"
           git diff --quiet || (git commit -am 'update dev version: ${{ github.sha }}' && git push origin main)
 
       - name: change live version locally
