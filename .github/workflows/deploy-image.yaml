@@ -135,4 +135,4 @@ jobs:
           commit-message: PR for live release, created by github actions bot
           delete-branch: true
           assignees: ${{ github.actor }}
-          reviewers: icewindq-liu
+          reviewers: icewindq-liu,icewindq
