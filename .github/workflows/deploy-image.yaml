@@ -127,3 +127,9 @@ jobs:
 
       - name: create PR for live env
         uses: peter-evans/create-pull-request@v6
+        with:
+          labels: release
+          add-paths: |
+            deploy/live/*
+          commit-message: PR for live release, created by github actions bot
+          delete-branch: true
