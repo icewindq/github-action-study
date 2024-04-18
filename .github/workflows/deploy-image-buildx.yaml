@@ -1,0 +1,76 @@
+#
+name: Use buildx to Create and publish a Docker image
+
+# Configures this workflow to run every time a change is pushed to the branch called `release`.
+on:
+  push:
+    branches: ['feature/pr-test']
+    paths-ignore:
+      - 'deploy/**'
+
+# Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+# There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+      # 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.3.0
+
+      # Uses the `docker/login-action` action to log in to the Container registry registry using the account and password that will publish the packages. Once published, the packages are scoped to the account defined here.
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push release api components
+        # uses: docker/build-push-action@v5
+        run: |
+          docker buildx build --push --cache-from type=gha --cache-to type=gha,mode=max \
+          --tag ${{ env.REGISTRY }}/${{ github.repository_owner }}/bloger:release-x-${{ github.sha }} \
+          --target bloger_release  .
+      - name: Build and push debug api components
+        # uses: docker/build-push-action@v5
+        run: |
+          docker buildx build --push --cache-from type=gha --cache-to type=gha,mode=max \
+          --tag ${{ env.REGISTRY }}/${{ github.repository_owner }}/bloger:debug-x-${{ github.sha }} \
+          --target bloger_debug  .
+
+      # - name: update dev version
+      #   run: |
+      #     git pull
+      #     sed -i -E "s/\"imageTag\": ?\".+\"/\"imageTag\": \"dev-${{ github.sha }}\"/" deploy/dev/bloger.json
+      #     git config --local user.email "actions-bot@users.noreply.github.com"
+      #     git config --local user.name "actions-bot"
+      #     git diff --quiet || (git commit -am 'update dev version: ${{ github.sha }}' && git push origin main)
+
+      # - name: change live version locally
+      #   run: |
+      #     sed -i -E "s/\"imageTag\": ?\".+\"/\"imageTag\": \"live-${{ github.sha }}\"/" deploy/live/bloger.json \
+
+      # - name: create PR for live env
+      #   uses: peter-evans/create-pull-request@v6
+      #   with:
+      #     title: backend live release
+      #     labels: release
+      #     add-paths: |
+      #       deploy/live/*
+      #     commit-message: PR for live release, created by github actions bot
+      #     delete-branch: true
+      #     assignees: ${{ github.actor }}
+      #     reviewers: icewindq-liu,icewindq

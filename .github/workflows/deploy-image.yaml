@@ -38,9 +38,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
       # # This step uses [docker/metadata-action](https://github.com/docker/metadata-action#about) to extract tags and labels that will be applied to the specified image. The `id` "meta" allows the output of this step to be referenced in a subsequent step. The `images` value provides the base name for the tags and labels.
       # - name: Extract metadata (tags, labels) for Docker
       #   id: meta
@@ -79,13 +76,6 @@ jobs:
       #         cache-to: type=gha,mode=max
       #       done
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build and push release api components
         uses: docker/build-push-action@v5
         with:
@@ -113,26 +103,26 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: update dev version
-        run: |
-          git pull
-          sed -i -E "s/\"imageTag\": ?\".+\"/\"imageTag\": \"dev-${{ github.sha }}\"/" deploy/dev/bloger.json
-          git config --local user.email "actions-bot@users.noreply.github.com"
-          git config --local user.name "actions-bot"
-          git diff --quiet || (git commit -am 'update dev version: ${{ github.sha }}' && git push origin main)
+      # - name: update dev version
+      #   run: |
+      #     git pull
+      #     sed -i -E "s/\"imageTag\": ?\".+\"/\"imageTag\": \"dev-${{ github.sha }}\"/" deploy/dev/bloger.json
+      #     git config --local user.email "actions-bot@users.noreply.github.com"
+      #     git config --local user.name "actions-bot"
+      #     git diff --quiet || (git commit -am 'update dev version: ${{ github.sha }}' && git push origin main)
 
-      - name: change live version locally
-        run: |
-          sed -i -E "s/\"imageTag\": ?\".+\"/\"imageTag\": \"live-${{ github.sha }}\"/" deploy/live/bloger.json \
+      # - name: change live version locally
+      #   run: |
+      #     sed -i -E "s/\"imageTag\": ?\".+\"/\"imageTag\": \"live-${{ github.sha }}\"/" deploy/live/bloger.json \
 
-      - name: create PR for live env
-        uses: peter-evans/create-pull-request@v6
-        with:
-          title: backend live release
-          labels: release
-          add-paths: |
-            deploy/live/*
-          commit-message: PR for live release, created by github actions bot
-          delete-branch: true
-          assignees: ${{ github.actor }}
-          reviewers: icewindq-liu,icewindq
+      # - name: create PR for live env
+      #   uses: peter-evans/create-pull-request@v6
+      #   with:
+      #     title: backend live release
+      #     labels: release
+      #     add-paths: |
+      #       deploy/live/*
+      #     commit-message: PR for live release, created by github actions bot
+      #     delete-branch: true
+      #     assignees: ${{ github.actor }}
+      #     reviewers: icewindq-liu,icewindq
